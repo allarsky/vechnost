@@ -13,7 +13,7 @@ local Window = Library:CreateWindow({
     MenuFadeTime = 0.2
 })
 
--- Tabs (sidebar)
+-- Tabs (sidebar) - hanya Info dan Webhook
 local Tabs = {
     Info = Window:AddTab("Info"),
     Webhook = Window:AddTab("Webhook")
@@ -24,10 +24,10 @@ local Options = {
     WebhookURL = "",
     Tier = "Secret",
     Enabled = false,
-    MinRarity = 250000 -- default secret
+    MinRarity = 250000
 }
 
--- Tier mapping (threshold minimal)
+-- Tier mapping
 local TierThresholds = {
     Common = 0,
     Uncommon = 1000,
@@ -38,36 +38,32 @@ local TierThresholds = {
     Secret = 250000
 }
 
--- Update min rarity based on selected tier
 local function updateMinRarity(tier)
     Options.MinRarity = TierThresholds[tier] or 250000
 end
 
 -- ========== INFO TAB ==========
-local InfoGroup = Tabs.Info:AddLeftGroupbox("Info")
-InfoGroup:AddLabel("Info"):AddTextLabel("Info", { Font = "Title", Size = 30 })
-InfoGroup:AddLabel("Vechnost Information"):AddTextLabel("Vechnost Information", { Font = "Subtitle", Size = 18 })
-InfoGroup:AddLabel("─────────────────")
+local InfoGroup = Tabs.Info:AddLeftGroupbox("Vechnost Information")
 
--- Alert box
-local AlertBox = InfoGroup:AddLabel("⚠️ Vechnist Alert!\nSkrip masih dalam pengembangan. Use at your own risk.")
-AlertBox:AddTextLabel("⚠️ Vechnist Alert!\nSkrip masih dalam pengembangan. Use at your own risk.", { Color = Color3.fromRGB(255, 200, 0), Font = "Regular", Size = 14 })
+InfoGroup:AddLabel("Vechnost | FishIt Notifier")
+InfoGroup:AddLabel("Version: Beta")
+InfoGroup:AddLabel("─────────────────────────")
+InfoGroup:AddLabel("⚠️ Vechnost Alert!")
+InfoGroup:AddLabel("Skrip masih dalam pengembangan.")
+InfoGroup:AddLabel("Use at your own risk!")
+InfoGroup:AddLabel("─────────────────────────")
 
-InfoGroup:AddLabel("─────────────────")
-
--- Discord button
 InfoGroup:AddButton({
-    Text = "Vechnost Community",
+    Text = "📋 Copy Discord Community Link",
     Func = function()
         setclipboard("https://discord.gg/pFhdW9ZwwY")
-        Library:Notify("Link Discord disalin ke clipboard!", 3)
+        Library:Notify("✅ Link Discord disalin ke clipboard!", 3)
     end
 })
 
 -- ========== WEBHOOK TAB ==========
 local WebhookGroup = Tabs.Webhook:AddLeftGroupbox("Webhook Settings")
 
--- Webhook URL input
 WebhookGroup:AddLabel("Discord Webhook URL")
 local WebhookInput = WebhookGroup:AddInput("WebhookURL", {
     Default = "",
@@ -80,11 +76,10 @@ WebhookInput:AddCallback(function(value)
     Options.WebhookURL = value
 end)
 
--- Tier dropdown
-WebhookGroup:AddLabel("Tier Filter")
+WebhookGroup:AddLabel("Tier Filter (Min Rarity)")
 local TierDropdown = WebhookGroup:AddDropdown("Tier", {
     Values = { "Common", "Uncommon", "Rare", "Legendary", "Epic", "Mythic", "Secret" },
-    Default = 7, -- secret
+    Default = 7,
     Multi = false
 })
 TierDropdown:AddCallback(function(value)
@@ -92,9 +87,9 @@ TierDropdown:AddCallback(function(value)
     updateMinRarity(value)
 end)
 
--- Toggle enable/disable
-WebhookGroup:AddLabel("Send fish webhook")
-local EnableToggle = WebhookGroup:AddToggle("Enabled", { Text = "On/Off", Default = false })
+WebhookGroup:AddLabel("─────────────────────────")
+WebhookGroup:AddLabel("Send Fish Webhook Notification")
+local EnableToggle = WebhookGroup:AddToggle("Enabled", { Text = "Enable Notifier", Default = false })
 EnableToggle:AddCallback(function(value)
     Options.Enabled = value
     if value then
@@ -104,12 +99,12 @@ EnableToggle:AddCallback(function(value)
     end
 end)
 
--- Test button
+WebhookGroup:AddLabel("─────────────────────────")
 WebhookGroup:AddButton({
-    Text = "TEST WEBHOOK CONNECTION",
+    Text = "🔗 TEST WEBHOOK CONNECTION",
     Func = function()
         if Options.WebhookURL == "" then
-            Library:Notify("Masukkan webhook URL terlebih dahulu!", 3)
+            Library:Notify("❌ Masukkan webhook URL terlebih dahulu!", 3)
             return
         end
         testWebhook(Options.WebhookURL)
@@ -120,7 +115,6 @@ WebhookGroup:AddButton({
 local HttpService = game:GetService("HttpService")
 local TextChatService = game:GetService("TextChatService")
 local isRunning = false
-local connection
 
 local function stripHtml(text)
     if not text then return "" end
@@ -172,7 +166,6 @@ local function parseFishMessage(rawText)
     rarityRaw = rarityRaw:lower()
     local rarityNum = parseRarityNumber(rarityRaw)
 
-    -- Filter berdasarkan min rarity
     if rarityNum < Options.MinRarity then return nil end
 
     local weight = extractWeight(text)
@@ -210,19 +203,20 @@ local function sendWebhook(data)
     task.delay(30, function() sentCache[key] = nil end)
 
     local embed = {
-        title = "VECHNOST - WEBHOOK",
+        title = "🎣 VECHNOST - FISH NOTIFIER",
         color = 3447003,
         fields = {
             { name = "", value = "━━━━━━━━━━━━━━━━━━━━", inline = false },
-            { name = "", value = "@" .. data.username .. " You have obtained a new **" .. Options.Tier:upper() .. "** fish!", inline = false },
+            { name = "", value = "**@" .. data.username .. "** obtained a new **" .. Options.Tier:upper() .. "** fish!", inline = false },
             { name = "", value = "━━━━━━━━━━━━━━━━━━━━", inline = false },
-            { name = "", value = "Fish name\n> " .. data.fish_name, inline = false },
-            { name = "", value = "Fish tier\n> " .. Options.Tier, inline = false },
-            { name = "", value = "Weight\n> " .. data.weight .. " kg", inline = false },
-            { name = "", value = "Mutation\n> " .. data.mutation, inline = false },
+            { name = "🐟 Fish Name", value = "> " .. data.fish_name, inline = true },
+            { name = "⭐ Fish Tier", value = "> " .. Options.Tier, inline = true },
+            { name = "⚖️ Weight", value = "> " .. data.weight .. " kg", inline = true },
+            { name = "✨ Mutation", value = "> " .. data.mutation, inline = true },
+            { name = "🎲 Rarity", value = "> 1 in " .. data.rarity_str, inline = true },
             { name = "", value = "━━━━━━━━━━━━━━━━━━━━", inline = false }
         },
-        footer = { text = "Notification by **Vechnost Community**" },
+        footer = { text = "Notification by Vechnost Community" },
         timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
     }
 
@@ -239,7 +233,8 @@ local function sendWebhook(data)
     if success and response.Success then
         Library:Notify("✅ Notifikasi terkirim: " .. data.username, 3)
     else
-        warn("[FishIt] Gagal kirim webhook")
+        warn("[Vechnost] Gagal kirim webhook")
+        Library:Notify("❌ Gagal kirim webhook!", 3)
     end
 end
 
@@ -258,28 +253,28 @@ end
 function startNotifier()
     if isRunning then return end
     if Options.WebhookURL == "" then
-        Library:Notify("Webhook URL belum diisi!", 3)
+        Library:Notify("❌ Webhook URL belum diisi!", 3)
         Options.Enabled = false
         EnableToggle:SetValue(false)
         return
     end
     isRunning = true
     TextChatService.OnIncomingMessage = onMessage
-    Library:Notify("Notifier dimulai! Memantau RBXGeneral...", 3)
+    Library:Notify("✅ Notifier aktif! Memantau RBXGeneral...", 3)
 end
 
 function stopNotifier()
     if not isRunning then return end
     isRunning = false
     TextChatService.OnIncomingMessage = nil
-    Library:Notify("Notifier dihentikan.", 3)
+    Library:Notify("🛑 Notifier dihentikan.", 3)
 end
 
 function testWebhook(url)
     local testEmbed = {
-        title = "Test Connection",
-        color = 3447003,
-        description = "Webhook berhasil terhubung!",
+        title = "🔗 Vechnost - Test Connection",
+        color = 65280,
+        description = "✅ Webhook berhasil terhubung!\nNotifier siap digunakan.",
         footer = { text = "Vechnost FishIt Notifier" },
         timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
     }
@@ -293,7 +288,7 @@ function testWebhook(url)
         })
     end)
     if success and response.Success then
-        Library:Notify("✅ Test berhasil! Cek Discord Anda.", 3)
+        Library:Notify("✅ Test berhasil! Cek Discord kamu.", 3)
     else
         Library:Notify("❌ Test gagal. Periksa URL webhook.", 3)
     end
@@ -304,14 +299,10 @@ ThemeManager:SetLibrary(Library)
 SaveManager:SetLibrary(Library)
 SaveManager:IgnoreThemeSettings()
 SaveManager:SetFolder("VechnostFishIt")
-SaveManager:BuildConfigSection(Tabs.Webhook) -- optional
+SaveManager:BuildConfigSection(Tabs.Webhook)
 ThemeManager:ApplyToTab(Tabs.Info)
 
--- Load saved settings (jika ada)
 SaveManager:Load()
-
--- Pastikan dropdown callback dipanggil untuk set initial min rarity
 updateMinRarity(Options.Tier)
 
--- Notifikasi awal
-Library:Notify("Vechnost FishIt Notifier loaded! Atur webhook di tab Webhook.", 5)
+Library:Notify("🎣 Vechnost FishIt loaded! Atur webhook di tab Webhook.", 5)
