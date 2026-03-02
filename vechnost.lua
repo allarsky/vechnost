@@ -1,8 +1,14 @@
 -- FishIt Server Notifier with Key System
--- Load library Fluent
-local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/main/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/main/saveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/main/interfaceManager.lua"))()
+-- Load library Fluent dengan URL yang benar (branch master)
+local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/saveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/interfaceManager.lua"))()
+
+-- Jika gagal memuat Fluent, beri pesan error
+if not Fluent then
+    warn("Gagal memuat Fluent library. Periksa koneksi internet atau URL.")
+    return
+end
 
 -- ========== KEY VALIDATION ==========
 local validKeys = {"vechnost123", "testkey"}  -- Ganti dengan key yang diinginkan
