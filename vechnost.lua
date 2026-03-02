@@ -1,9 +1,8 @@
 -- FishIt Server Notifier with Key System
 -- Load library Fluent
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/saveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/interfaceManager.lua"))()
-
+local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/main/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/main/saveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/main/interfaceManager.lua"))()
 -- ========== KEY VALIDATION ==========
 local validKeys = {"vechnost123", "testkey"}  -- Ganti dengan key yang diinginkan
 local function validateKey(input)
