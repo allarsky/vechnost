@@ -1,8 +1,8 @@
 --[[ 
-    FILE: vechnost_webhook.lua
+    FILE: vechnost_notifier.lua
     BRAND: Vechnost
-    VERSION: 1.0.0
-    DESC: Server-Wide Fish Webhook Logger for Roblox "Fish It"
+    VERSION: Beta
+    DESC: Webhook Notifier for Roblox "Fish It"
           Logs fish catches from ALL players in the server
           Sends rich notifications to Discord via Webhook
 ]]
@@ -488,7 +488,7 @@ end
 -- BAGIAN 9: WEBHOOK ENGINE (Discord Components V2)
 -- =====================================================
 
--- Helper: Build a Components V2 fish catch payload (Vechnost Style)
+-- Helper: Build a Components V2 fish catch payload (Final Custom Style)
 local function BuildPayload(playerName, fishId, weight, mutation)
     local fish = FishDB[fishId]
     if not fish then return nil end
@@ -498,15 +498,6 @@ local function BuildPayload(playerName, fishId, weight, mutation)
     local mutText = (mutation ~= nil) and tostring(mutation) or "None"
     local weightText = string.format("%.1fkg", weight or 0)
     local iconUrl = IconCache[fishId] or ""
-    
-    -- Rarity emoji by tier
-    local _e = string.char
-    local RARITY_EMOJI = {
-        [1] = _e(226,172,156), [2] = _e(240,159,159,169), [3] = _e(240,159,159,166),
-        [4] = _e(240,159,159,170), [5] = _e(240,159,159,167), [6] = _e(240,159,159,165),
-        [7] = _e(240,159,159,165), [8] = _e(240,159,159,169), [9] = _e(240,159,159,166),
-    }
-    local rarityEmoji = RARITY_EMOJI[tier] or ""
     local dateStr = os.date("!%B %d, %Y")
 
     -- Components V2 payload
@@ -518,23 +509,23 @@ local function BuildPayload(playerName, fishId, weight, mutation)
             {
                 type = 17,
                 components = {
-                    -- Header baru: # NEW FISH CAUGHT!
+                    -- Header: # NEW FISH CAUGHT!
                     { type = 10, content = "# NEW FISH CAUGHT!" },
                     
-                    -- Pembatas garis pertama
+                    -- Pembatas Garis Pertama
                     { type = 14, spacing = 1, divider = true },
                     
-                    -- Text: __@username you got new [RARITY] fish__
+                    -- @username you got new [RARITY] fish
                     { 
                         type = 10, 
-                        content = "__@" .. (playerName or "Unknown") .. " you got new " .. string.upper(rarityName) .. " fish__" 
+                        content = "@" .. (playerName or "Unknown") .. " you got new a " .. string.upper(rarityName) .. " fish" 
                     },
                     
-                    -- Section Fish Name & Thumbnail
+                    -- Fish Name Section dengan Thumbnail
                     {
                         type = 9,
                         components = {
-                            { type = 10, content = "**Fish Name**" },
+                            { type = 10, content = "> Fish Name" },
                             { type = 10, content = "> " .. (fish.Name or "Unknown") }
                         },
                         accessory = iconUrl ~= "" and {
@@ -543,24 +534,24 @@ local function BuildPayload(playerName, fishId, weight, mutation)
                         } or nil
                     },
                     
-                    -- Section Fish Tier
-                    { type = 10, content = "**Fish Tier**" },
+                    -- Fish Tier Section
+                    { type = 10, content = "> Fish Tier" },
                     { type = 10, content = "> " .. string.upper(rarityName) },
                     
-                    -- Section Weight
-                    { type = 10, content = "**Weight**" },
+                    -- Weight Section
+                    { type = 10, content = "> Weight" },
                     { type = 10, content = "> " .. weightText },
                     
-                    -- Section Mutation
-                    { type = 10, content = "**Mutation**" },
+                    -- Mutation Section
+                    { type = 10, content = "> Mutation" },
                     { type = 10, content = "> " .. mutText },
 
-                    -- Pembatas garis kedua
+                    -- Pembatas Garis Kedua
                     { type = 14, spacing = 1, divider = true },
 
-                    -- Footer baru
+                    -- Footer: Notification by discord.gg/vechnost
                     { type = 10, content = "> Notification by discord.gg/vechnost" },
-                    { type = 10, content = "-# " .. dateStr }
+                    { type = 10, content = "> -# " .. dateStr }
                 }
             }
         }
@@ -568,6 +559,7 @@ local function BuildPayload(playerName, fishId, weight, mutation)
 
     return payload
 end
+
 
 
 -- Helper: Build activation payload (Vechnost Style)
