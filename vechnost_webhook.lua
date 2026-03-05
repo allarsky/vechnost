@@ -1,8 +1,8 @@
 --[[ 
-    FILE: vechnost_webhook.lua
+    FILE: vechnost_notifier.lua
     BRAND: Vechnost
-    VERSION: 1.0.0
-    DESC: Server-Wide Fish Webhook Logger for Roblox "Fish It"
+    VERSION: Beta
+    DESC: Webhook Notifier for Roblox "Fish It"
           Logs fish catches from ALL players in the server
           Sends rich notifications to Discord via Webhook
 ]]
@@ -488,7 +488,7 @@ end
 -- BAGIAN 9: WEBHOOK ENGINE (Discord Components V2)
 -- =====================================================
 
--- Helper: Build a Components V2 fish catch payload (Vechnost Style)
+-- Helper: Build a Components V2 fish catch payload (Final Custom Style)
 local function BuildPayload(playerName, fishId, weight, mutation)
     local fish = FishDB[fishId]
     if not fish then return nil end
@@ -498,86 +498,76 @@ local function BuildPayload(playerName, fishId, weight, mutation)
     local mutText = (mutation ~= nil) and tostring(mutation) or "None"
     local weightText = string.format("%.1fkg", weight or 0)
     local iconUrl = IconCache[fishId] or ""
-    local color = RARITY_COLOR[tier] or 0x30ff6a
-    -- Rarity emoji by tier
-    local _e = string.char
-    local RARITY_EMOJI = {
-        [1] = _e(226,172,156),
-        [2] = _e(240,159,159,169),
-        [3] = _e(240,159,159,166),
-        [4] = _e(240,159,159,170),
-        [5] = _e(240,159,159,167),
-        [6] = _e(240,159,159,165),
-        [7] = _e(240,159,159,165),
-        [8] = _e(240,159,159,169),
-        [9] = _e(240,159,159,166),
-    }
-    local rarityEmoji = RARITY_EMOJI[tier] or ""
     local dateStr = os.date("!%B %d, %Y")
-
-    -- Get live player stats
-    local stats = GetPlayerStats()
 
     -- Components V2 payload
     local payload = {
-        username = "Vechnost Notifier",
-        avatar_url = "https://cdn.discordapp.com/attachments/1476338840267653221/1478712225832374272/VIA_LOGIN.png?ex=69a96593&is=69a81413&hm=04e442b9e2b765e68e0f73bb0d6de014c6060b67b0bf0d7bb2bace70bfa4ff19&",
+        username = "V - NOTIFIER",
+        avatar_url = "https://i.ibb.co.com/fYKH0c20/VIA-LOGIN.png",
         flags = 32768,
         components = {
             {
                 type = 17,
                 components = {
-                    -- Header with rarity emoji
-                    { type = 10, content = rarityEmoji .. " **" .. (playerName or "Unknown") .. "  New Fish Caught !**" },
-                    -- Separator
+                    -- Header: # NEW FISH CAUGHT!
+                    { type = 10, content = "# NEW FISH CAUGHT!" },
+                    
+                    -- Pembatas Garis Pertama
                     { type = 14, spacing = 1, divider = true },
-                    -- Section: [ RARITY ] - FishName + Thumbnail
+                    
+                    -- @username you got new [RARITY] fish
+                    { 
+                        type = 10, 
+                        content = "@" .. (playerName or "Unknown") .. " you got new a " .. string.upper(rarityName) .. " fish" 
+                    },
+                    
+                    -- Fish Name Section dengan Thumbnail
                     {
                         type = 9,
                         components = {
-                            {
-                                type = 10,
-                                content = "### [ " .. string.upper(rarityName) .. " ] - " .. (fish.Name or "Unknown")
-                            }
+                            { type = 10, content = "**Fish Name**" },
+                            { type = 10, content = "> " .. (fish.Name or "Unknown") }
                         },
                         accessory = iconUrl ~= "" and {
                             type = 11,
                             media = { url = iconUrl }
                         } or nil
                     },
-                    -- Fish details
-                    { type = 10, content = "**Fish Name:**  " .. (fish.Name or "Unknown") },
-                    { type = 10, content = "**Rarity:**  " .. string.upper(rarityName) },
-                    { type = 10, content = "**Weight:**  " .. weightText },
-                    { type = 10, content = "**Mutation:**  " .. mutText },
+                    
+                    -- Fish Tier Section
+                    { type = 10, content = "**Fish Tier**" },
+                    { type = 10, content = "> " .. string.upper(rarityName) },
+                    
+                    -- Weight Section
+                    { type = 10, content = "**Weight**" },
+                    { type = 10, content = "> " .. weightText },
+                    
+                    -- Mutation Section
+                    { type = 10, content = "**Mutation**" },
+                    { type = 10, content = "> " .. mutText },
+
+                    -- Pembatas Garis Kedua
+                    { type = 14, spacing = 1, divider = true },
+
+                    -- Footer: Notification by discord.gg/vechnost
+                    { type = 10, content = "Notification by **discord.gg/vechnost**" },
+                    { type = 10, content = "> -# " .. dateStr }
                 }
             }
         }
     }
 
-    -- Add Current Coin + Backpack only in Local mode
-    local container = payload.components[1].components
-    if not Settings.ServerWide then
-        table.insert(container, { type = 10, content = "**Current Coin:**  $" .. FormatNumber(stats.Coins) })
-        table.insert(container, { type = 10, content = "**Backpack Count:**  " .. FormatNumber(stats.BackpackCount) .. " / " .. FormatNumber(stats.BackpackMax) })
-    end
-
-    -- Separator + Account info + Date
-    table.insert(container, { type = 14, spacing = 1, divider = true })
-    table.insert(container, { type = 10, content = "**Account Name:**  " .. (playerName or "Unknown") })
-    table.insert(container, { type = 10, content = "**Mode:**  " .. (Settings.ServerWide and "Server-Wide" or "Local") })
-    table.insert(container, { type = 14, spacing = 1, divider = true })
-    table.insert(container, { type = 10, content = "-# " .. dateStr })
-
     return payload
 end
+
+
 
 -- Helper: Build activation payload (Vechnost Style)
 local function BuildActivationPayload(playerName, mode)
     local dateStr = os.date("!%B %d, %Y")
     return {
-        username = "Vechnost Notifier",
-        avatar_url = "https://cdn.discordapp.com/attachments/1476338840267653221/1478712225832374272/VIA_LOGIN.png?ex=69a96593&is=69a81413&hm=04e442b9e2b765e68e0f73bb0d6de014c6060b67b0bf0d7bb2bace70bfa4ff19&",
+        username = "V - NOTIFIER",
+        avatar_url = "https://i.ibb.co.com/fYKH0c20/VIA-LOGIN.png",
         flags = 32768,
         components = {
             {
@@ -586,16 +576,12 @@ local function BuildActivationPayload(playerName, mode)
                 components = {
                     {
                         type = 10,
-                        content = "**" .. playerName .. "  Webhook Activated !**"
+                        content = "# SHEESSSHHHH WEBHOOK CONNECTED"
                     },
                     { type = 14, spacing = 1, divider = true },
                     {
                         type = 10,
-                        content = "### Vechnost Webhook Notifier"
-                    },
-                    {
-                        type = 10,
-                        content = "- **Account Name:** " .. playerName .. "\n- **Mode:** " .. mode .. "\n- **Status:** Online"
+                        content =  " **Notifier Mode:** \n > " .. mode .. "\n **Status**\n > <a:online12:1455051234569490600>"
                     },
                     { type = 14, spacing = 1, divider = true },
                     {
@@ -1014,11 +1000,11 @@ local function StartLogger()
 
     -- Send activation message (Components V2)
     task.spawn(function()
-        local mode = Settings.ServerWide and "Server Notifier" or "Local Only"
+        local mode = Settings.ServerWide and "Global Notifier" or "Local Notifier"
         SendWebhook(BuildActivationPayload(LocalPlayer.Name, mode))
     end)
 
-    warn("[Vechnost] Webhook Logger ENABLED | Mode:", Settings.ServerWide and "Server-Notifier" or "Local")
+    warn("[Vechnost] Webhook Notifier ENABLED | Mode:", Settings.ServerWide and "Global-Notifier" or "Local-Notifier")
 end
 
 local function StopLogger()
@@ -1029,7 +1015,7 @@ local function StopLogger()
     end
     Connections = {}
 
-    warn("[Vechnost] Webhook Logger DISABLED | Total logged:", Settings.LogCount)
+    warn("[Vechnost] Webhook Notifier DISABLED | Total Notif:", Settings.LogCount)
 end
 
 -- =====================================================
@@ -1039,7 +1025,7 @@ local Window = Rayfield:CreateWindow({
     Name = "Vechnost",
     Icon = "webhook",
     LoadingTitle = "Vechnost Webhook Notifier",
-    LoadingSubtitle = "v1.0.0",
+    LoadingSubtitle = "Beta",
     Theme = "Default",
     ToggleUIKeybind = "V",
     DisableRayfieldPrompts = true,
@@ -1078,7 +1064,7 @@ Button.Position = UDim2.fromScale(0.05, 0.5)
 Button.BackgroundTransparency = 1
 Button.AutoButtonColor = false
 Button.BorderSizePixel = 0
-Button.Image = "rbxassetid://86481621402599"
+Button.Image = "https://www.roblox.com/asset-thumbnail/image?assetId=127239715511367&width=420&height=420&format=png"
 Button.ImageTransparency = 0
 Button.ScaleType = Enum.ScaleType.Fit
 Button.Parent = BtnGui
@@ -1121,7 +1107,7 @@ end)
 
 -- BAGIAN 13: TABS & UI ELEMENTS
 -- =====================================================
-local TabWebhook = Window:CreateTab("Webhook Logger", "webhook")
+local TabWebhook = Window:CreateTab("Setup Webhook", "webhook")
 local TabSettings = Window:CreateTab("Settings", "settings")
 
 -- -- RARITY FILTER --
@@ -1144,22 +1130,22 @@ TabWebhook:CreateDropdown({
         end
 
         if next(Settings.SelectedRarities) == nil then
-            Rayfield:Notify({ Title = "Vechnost", Content = "Filter: Semua rarity", Duration = 2 })
+            Rayfield:Notify({ Title = "Vechnost", Content = "Filter: all rarity", Duration = 2 })
         else
-            Rayfield:Notify({ Title = "Vechnost", Content = "Filter rarity diperbarui", Duration = 2 })
+            Rayfield:Notify({ Title = "Vechnost", Content = "Filter rarity updated", Duration = 2 })
         end
     end
 })
 
 -- -- WEBHOOK URL --
-TabWebhook:CreateSection("Webhook Configuration")
+TabWebhook:CreateSection("Setup Webhook")
 
 local WebhookUrlBuffer = ""
 
 TabWebhook:CreateInput({
     Name = "Discord Webhook URL",
     CurrentValue = "",
-    PlaceholderText = "https://discord.com/api/webhooks/...",
+    PlaceholderText = "https://discord.com/api/webhook/...",
     RemoveTextAfterFocusLost = false,
     Flag = "WebhookUrl",
     Callback = function(Text)
@@ -1184,24 +1170,24 @@ TabWebhook:CreateButton({
 })
 
 -- -- MODE --
-TabWebhook:CreateSection("Logger Mode")
+TabWebhook:CreateSection("Notifier Mode")
 
 TabWebhook:CreateToggle({
-    Name = "Server-Notifier Mode",
+    Name = "Local / Global Mode",
     CurrentValue = true,
     Flag = "ServerNotifierMode",
     Callback = function(Value)
         Settings.ServerWide = Value
         Rayfield:Notify({
             Title = "Vechnost",
-            Content = Value and "Mode: Seluruh Server" or "Mode: Hanya Lokal",
+            Content = Value and "Mode: Global Server" or "Mode: Local Server",
             Duration = 2
         })
     end
 })
 
 -- -- CONTROL --
-TabWebhook:CreateSection("Control")
+TabWebhook:CreateSection("Controller")
 
 TabWebhook:CreateToggle({
     Name = "Enable Webhook Logger",
@@ -1210,14 +1196,14 @@ TabWebhook:CreateToggle({
     Callback = function(Value)
         if Value then
             if Settings.Url == "" then
-                Rayfield:Notify({ Title = "Vechnost", Content = "Isi webhook URL dulu!", Duration = 3 })
+                Rayfield:Notify({ Title = "Vechnost", Content = "Webhook URL not found!", Duration = 3 })
                 return
             end
             StartLogger()
-            Rayfield:Notify({ Title = "Vechnost", Content = "Notifier Aktif!", Duration = 2 })
+            Rayfield:Notify({ Title = "Vechnost", Content = "Notifier active!", Duration = 2 })
         else
             StopLogger()
-            Rayfield:Notify({ Title = "Vechnost", Content = "Notifier Berhenti", Duration = 2 })
+            Rayfield:Notify({ Title = "Vechnost", Content = "Notifier stopped", Duration = 2 })
         end
     end
 })
@@ -1237,8 +1223,8 @@ task.spawn(function()
                     StatusLabel:Set({
                         Title = "Notifier Status",
                         Content = string.format(
-                            "Status: Aktif\nMode: %s\nTotal Log: %d ikan",
-                            Settings.ServerWide and "Server-Notifier" or "Local Only",
+                            "Status: Active\nMode: %s\nTotal Log: %d fish",
+                            Settings.ServerWide and "Global Server" or "Local Server",
                             Settings.LogCount
                         )
                     })
@@ -1254,14 +1240,14 @@ task.spawn(function()
 end)
 
 -- -- SETTINGS TAB --
-TabSettings:CreateSection("Tentang")
+TabSettings:CreateSection("Information")
 
 TabSettings:CreateParagraph({
     Title = "Vechnost Webhook Notifier",
-    Content = "Version: 1.0.0\nServer-Notifier Fish Catch Logger\nLog ikan dari semua player di server\n\nby Vechnost"
+    Content = "Beta Version\nNotifier Fish Caught\nfish notifications from all players on the server\n\nby discord.gg/vechnost"
 })
 
-TabSettings:CreateSection("Testing")
+TabSettings:CreateSection("Test Mode")
 
 TabSettings:CreateButton({
     Name = "Test Webhook",
@@ -1275,16 +1261,16 @@ TabSettings:CreateButton({
             SendWebhook(BuildTestPayload(LocalPlayer.Name))
         end)
 
-        Rayfield:Notify({ Title = "Vechnost", Content = "Test message terkirim!", Duration = 2 })
+        Rayfield:Notify({ Title = "Vechnost", Content = "Sending Test Notifier!", Duration = 2 })
     end
 })
 
 TabSettings:CreateButton({
-    Name = "Reset Log Counter",
+    Name = "Reset Counter",
     Callback = function()
         Settings.LogCount = 0
         Settings.SentUUID = {}
-        Rayfield:Notify({ Title = "Vechnost", Content = "Counter di-reset!", Duration = 2 })
+        Rayfield:Notify({ Title = "Vechnost", Content = "Counter Reseted!", Duration = 2 })
     end
 })
 
@@ -1292,5 +1278,5 @@ TabSettings:CreateButton({
 -- BAGIAN 14: INIT
 -- =====================================================
 Rayfield:LoadConfiguration()
-warn("[Vechnost] Webhook Logger v1.0 Loaded!")
-warn("[Vechnost] Toggle GUI: tekan V atau tap tombol floating")
+warn("[Vechnost] Webhook Notifier Loaded!")
+warn("[Vechnost] Toggle GUI: click V or Press logo floating")
