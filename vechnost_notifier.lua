@@ -1076,7 +1076,7 @@ Button.Position = UDim2.fromScale(0.05, 0.5)
 Button.BackgroundTransparency = 1
 Button.AutoButtonColor = false
 Button.BorderSizePixel = 0
-Button.Image = "rbxassetid://6031094678"
+Button.Image = "https://www.roblox.com/asset-thumbnail/image?assetId=127239715511367&width=420&height=420&format=png"
 Button.ImageTransparency = 0
 Button.ScaleType = Enum.ScaleType.Fit
 Button.Parent = BtnGui
