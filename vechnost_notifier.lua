@@ -502,8 +502,8 @@ local function BuildPayload(playerName, fishId, weight, mutation)
 
     -- Components V2 payload
     local payload = {
-        username = "Vechnost Notifier",
-        avatar_url = "https://cdn.discordapp.com/attachments/1476338840267653221/1478712225832374272/VIA_LOGIN.png",
+        username = "V - NOTIFIER",
+        avatar_url = "https://i.ibb.co.com/fYKH0c20/VIA-LOGIN.png",
         flags = 32768,
         components = {
             {
@@ -566,8 +566,8 @@ end
 local function BuildActivationPayload(playerName, mode)
     local dateStr = os.date("!%B %d, %Y")
     return {
-        username = "Vechnost Notifier",
-        avatar_url = "https://cdn.discordapp.com/attachments/1476338840267653221/1478712225832374272/VIA_LOGIN.png?ex=69a96593&is=69a81413&hm=04e442b9e2b765e68e0f73bb0d6de014c6060b67b0bf0d7bb2bace70bfa4ff19&",
+        username = "V - NOTIFIER",
+        avatar_url = "https://i.ibb.co.com/fYKH0c20/VIA-LOGIN.png",
         flags = 32768,
         components = {
             {
