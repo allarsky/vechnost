@@ -1008,7 +1008,7 @@ local function StartLogger()
         SendWebhook(BuildActivationPayload(LocalPlayer.Name, mode))
     end)
 
-    warn("[Vechnost] Webhook Logger ENABLED | Mode:", Settings.ServerWide and "Server-Notifier" or "Local")
+    warn("[Vechnost] Webhook Notifier ENABLED | Mode:", Settings.ServerWide and "Server-Notifier" or "Local")
 end
 
 local function StopLogger()
@@ -1019,7 +1019,7 @@ local function StopLogger()
     end
     Connections = {}
 
-    warn("[Vechnost] Webhook Logger DISABLED | Total logged:", Settings.LogCount)
+    warn("[Vechnost] Webhook Notifier DISABLED | Total Notif:", Settings.LogCount)
 end
 
 -- =====================================================
@@ -1029,7 +1029,7 @@ local Window = Rayfield:CreateWindow({
     Name = "Vechnost",
     Icon = "webhook",
     LoadingTitle = "Vechnost Webhook Notifier",
-    LoadingSubtitle = "v1.0.0",
+    LoadingSubtitle = "Beta",
     Theme = "Default",
     ToggleUIKeybind = "V",
     DisableRayfieldPrompts = true,
@@ -1111,7 +1111,7 @@ end)
 
 -- BAGIAN 13: TABS & UI ELEMENTS
 -- =====================================================
-local TabWebhook = Window:CreateTab("Webhook Logger", "webhook")
+local TabWebhook = Window:CreateTab("Setup Webhook", "webhook")
 local TabSettings = Window:CreateTab("Settings", "settings")
 
 -- -- RARITY FILTER --
@@ -1134,22 +1134,22 @@ TabWebhook:CreateDropdown({
         end
 
         if next(Settings.SelectedRarities) == nil then
-            Rayfield:Notify({ Title = "Vechnost", Content = "Filter: Semua rarity", Duration = 2 })
+            Rayfield:Notify({ Title = "Vechnost", Content = "Filter: all rarity", Duration = 2 })
         else
-            Rayfield:Notify({ Title = "Vechnost", Content = "Filter rarity diperbarui", Duration = 2 })
+            Rayfield:Notify({ Title = "Vechnost", Content = "Filter rarity updated", Duration = 2 })
         end
     end
 })
 
 -- -- WEBHOOK URL --
-TabWebhook:CreateSection("Webhook Configuration")
+TabWebhook:CreateSection("Setup Webhook")
 
 local WebhookUrlBuffer = ""
 
 TabWebhook:CreateInput({
     Name = "Discord Webhook URL",
     CurrentValue = "",
-    PlaceholderText = "https://discord.com/api/webhooks/...",
+    PlaceholderText = "https://discord.com/api/webhook/...",
     RemoveTextAfterFocusLost = false,
     Flag = "WebhookUrl",
     Callback = function(Text)
@@ -1174,24 +1174,24 @@ TabWebhook:CreateButton({
 })
 
 -- -- MODE --
-TabWebhook:CreateSection("Logger Mode")
+TabWebhook:CreateSection("Notifier Mode")
 
 TabWebhook:CreateToggle({
-    Name = "Server-Notifier Mode",
+    Name = "Local / Global Mode",
     CurrentValue = true,
     Flag = "ServerNotifierMode",
     Callback = function(Value)
         Settings.ServerWide = Value
         Rayfield:Notify({
             Title = "Vechnost",
-            Content = Value and "Mode: Seluruh Server" or "Mode: Hanya Lokal",
+            Content = Value and "Mode: Global Server" or "Mode: Local Server",
             Duration = 2
         })
     end
 })
 
 -- -- CONTROL --
-TabWebhook:CreateSection("Control")
+TabWebhook:CreateSection("Controller")
 
 TabWebhook:CreateToggle({
     Name = "Enable Webhook Logger",
@@ -1200,14 +1200,14 @@ TabWebhook:CreateToggle({
     Callback = function(Value)
         if Value then
             if Settings.Url == "" then
-                Rayfield:Notify({ Title = "Vechnost", Content = "Isi webhook URL dulu!", Duration = 3 })
+                Rayfield:Notify({ Title = "Vechnost", Content = "Webhook URL not found!", Duration = 3 })
                 return
             end
             StartLogger()
-            Rayfield:Notify({ Title = "Vechnost", Content = "Notifier Aktif!", Duration = 2 })
+            Rayfield:Notify({ Title = "Vechnost", Content = "Notifier active!", Duration = 2 })
         else
             StopLogger()
-            Rayfield:Notify({ Title = "Vechnost", Content = "Notifier Berhenti", Duration = 2 })
+            Rayfield:Notify({ Title = "Vechnost", Content = "Notifier stopped", Duration = 2 })
         end
     end
 })
@@ -1227,8 +1227,8 @@ task.spawn(function()
                     StatusLabel:Set({
                         Title = "Notifier Status",
                         Content = string.format(
-                            "Status: Aktif\nMode: %s\nTotal Log: %d ikan",
-                            Settings.ServerWide and "Server-Notifier" or "Local Only",
+                            "Status: Active\nMode: %s\nTotal Log: %d fish",
+                            Settings.ServerWide and "Global Server" or "Local Server",
                             Settings.LogCount
                         )
                     })
@@ -1244,14 +1244,14 @@ task.spawn(function()
 end)
 
 -- -- SETTINGS TAB --
-TabSettings:CreateSection("Tentang")
+TabSettings:CreateSection("Information")
 
 TabSettings:CreateParagraph({
     Title = "Vechnost Webhook Notifier",
-    Content = "Version: 1.0.0\nServer-Notifier Fish Catch Logger\nLog ikan dari semua player di server\n\nby Vechnost"
+    Content = "Beta Version\nNotifier Fish Caught\nfish notifications from all players on the server\n\nby discord.gg/vechnost"
 })
 
-TabSettings:CreateSection("Testing")
+TabSettings:CreateSection("Test Mode")
 
 TabSettings:CreateButton({
     Name = "Test Webhook",
@@ -1265,16 +1265,16 @@ TabSettings:CreateButton({
             SendWebhook(BuildTestPayload(LocalPlayer.Name))
         end)
 
-        Rayfield:Notify({ Title = "Vechnost", Content = "Test message terkirim!", Duration = 2 })
+        Rayfield:Notify({ Title = "Vechnost", Content = "Sending Test Notifier!", Duration = 2 })
     end
 })
 
 TabSettings:CreateButton({
-    Name = "Reset Log Counter",
+    Name = "Reset Counter",
     Callback = function()
         Settings.LogCount = 0
         Settings.SentUUID = {}
-        Rayfield:Notify({ Title = "Vechnost", Content = "Counter di-reset!", Duration = 2 })
+        Rayfield:Notify({ Title = "Vechnost", Content = "Counter Reseted!", Duration = 2 })
     end
 })
 
@@ -1282,5 +1282,5 @@ TabSettings:CreateButton({
 -- BAGIAN 14: INIT
 -- =====================================================
 Rayfield:LoadConfiguration()
-warn("[Vechnost] Webhook Logger v1.0 Loaded!")
-warn("[Vechnost] Toggle GUI: tekan V atau tap tombol floating")
+warn("[Vechnost] Webhook Notifier Loaded!")
+warn("[Vechnost] Toggle GUI: click V or Press logo floating")
