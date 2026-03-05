@@ -525,7 +525,7 @@ local function BuildPayload(playerName, fishId, weight, mutation)
                     {
                         type = 9,
                         components = {
-                            { type = 10, content = "> Fish Name" },
+                            { type = 10, content = "**Fish Name**" },
                             { type = 10, content = "> " .. (fish.Name or "Unknown") }
                         },
                         accessory = iconUrl ~= "" and {
@@ -535,22 +535,22 @@ local function BuildPayload(playerName, fishId, weight, mutation)
                     },
                     
                     -- Fish Tier Section
-                    { type = 10, content = "> Fish Tier" },
+                    { type = 10, content = "**Fish Tier**" },
                     { type = 10, content = "> " .. string.upper(rarityName) },
                     
                     -- Weight Section
-                    { type = 10, content = "> Weight" },
+                    { type = 10, content = "**Weight**" },
                     { type = 10, content = "> " .. weightText },
                     
                     -- Mutation Section
-                    { type = 10, content = "> Mutation" },
+                    { type = 10, content = "**Mutation**" },
                     { type = 10, content = "> " .. mutText },
 
                     -- Pembatas Garis Kedua
                     { type = 14, spacing = 1, divider = true },
 
                     -- Footer: Notification by discord.gg/vechnost
-                    { type = 10, content = "> Notification by discord.gg/vechnost" },
+                    { type = 10, content = "Notification by **discord.gg/vechnost**" },
                     { type = 10, content = "> -# " .. dateStr }
                 }
             }
