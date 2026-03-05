@@ -581,7 +581,7 @@ local function BuildActivationPayload(playerName, mode)
                     { type = 14, spacing = 1, divider = true },
                     {
                         type = 10,
-                        content =  " **Notifier Mode** " .. mode .. "\n **Status** <a:online12:1455051234569490600>"
+                        content =  " **Notifier Mode :** " .. mode .. "\n**Status :** <a:online12:1455051234569490600>"
                     },
                     { type = 14, spacing = 1, divider = true },
                     {
