@@ -1,5 +1,5 @@
 -- Vechnost Notifier
--- FILE: vechnost_notifier.lua
+-- FILE: vechnost_webhook.lua
 -- BRAND: Vechnost
 -- VERSION: Beta
 -- DESC: Webhook Notifier for Roblox "Fish It"
