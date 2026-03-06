@@ -7,33 +7,6 @@
           Sends rich notifications to Discord via Webhook
 ]]
 -- =====================================================
--- BAGIAN 0: AUTHENTICATION (WHITELIST)
--- =====================================================
-local function CheckWhitelist()
-    local success, whitelist = pcall(function()
-        -- Mengambil database ID dari file whitelist.lua di GitHub kamu
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/allarsky/vechnost/refs/heads/main/whitelist.lua"))()
-    end)
-
-    if not success or type(whitelist) ~= "table" then
-        game.Players.LocalPlayer:Kick("Vechnost Error: Gagal memuat database Whitelist.")
-        return false
-    end
-
-    -- Cek apakah UserId pemain ada di dalam tabel whitelist
-    if not whitelist[game.Players.LocalPlayer.UserId] then
-        game.Players.LocalPlayer:Kick("Vechnost Access: Akun kamu (" .. game.Players.LocalPlayer.UserId .. ") belum terdaftar. Silahkan redeem key di discord.gg/vechnost")
-        return false
-    end
-    return true
-end
-
--- Jika ID tidak terdaftar, script berhenti di sini
-if not CheckWhitelist() then return end
-
--- [[ LANJUT KE SCRIPT ASLI KAMU ]] --
-
--- =====================================================
 -- BAGIAN 1: CLEANUP SYSTEM
 -- =====================================================
 local CoreGui = game:GetService("CoreGui")
@@ -1061,7 +1034,7 @@ local Window = Rayfield:CreateWindow({
         FolderName = "Vechnost",
         FileName = "VechnostConfig"
     },
-    KeySystem = false,
+    KeySystem = true,
     KeySettings = {
         Title = "Vechnost Access",
         Subtitle = "Authentication Required",
