@@ -11,7 +11,7 @@
 -- =====================================================
 local function ValidateKeyWithAPI(key, robloxId)
     -- GANTI URL INI DENGAN IP VPS ATAU DOMAIN KAMU
-    local apiUrl = "http://your-server-ip:3000/validate"
+    local apiUrl = "http://prem-eu3.bot-hosting.net:20434/validate"
     local data = {
         key = key,
         robloxId = tostring(robloxId)
