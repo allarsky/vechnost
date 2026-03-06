@@ -56,6 +56,9 @@ local function ValidateKeyWithAPI(key, robloxId)
     return decoded.valid, decoded.reason
 end
 
+-- Jadikan fungsi global agar dapat diakses dari callback Rayfield
+_G.ValidateKeyWithAPI = ValidateKeyWithAPI
+
 -- =====================================================
 -- BAGIAN 1: CLEANUP SYSTEM
 -- =====================================================
@@ -986,7 +989,7 @@ local function CreateAuthWindow()
         Name = "License Key",
         CurrentValue = "",
         PlaceholderText = "VECH-XXXX-HOOK",
-        Flag = "AuthKeyInput",  -- flag tetap digunakan untuk kompatibilitas, tapi kita pakai variable lokal
+        Flag = "AuthKeyInput",
         Callback = function(text)
             keyInputValue = text
         end
@@ -1002,13 +1005,14 @@ local function CreateAuthWindow()
                 return
             end
 
-            -- Pastikan fungsi validasi ada
-            if type(ValidateKeyWithAPI) ~= "function" then
-                Rayfield:Notify({ Title = "Vechnost", Content = "Internal error: validasi tidak tersedia.", Duration = 5 })
+            -- Gunakan fungsi dari global yang sudah dipastikan ada
+            local validateFunc = _G.ValidateKeyWithAPI
+            if type(validateFunc) ~= "function" then
+                Rayfield:Notify({ Title = "Vechnost", Content = "Internal error: validasi tidak tersedia. Coba restart script.", Duration = 5 })
                 return
             end
 
-            local valid, reason = ValidateKeyWithAPI(keyInput, LocalPlayer.UserId)
+            local valid, reason = validateFunc(keyInput, LocalPlayer.UserId)
             if valid then
                 Rayfield:Notify({ Title = "Vechnost", Content = "✅ Key valid! Memuat panel...", Duration = 3 })
                 authenticated = true
