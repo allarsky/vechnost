@@ -7,6 +7,99 @@
           Sends rich notifications to Discord via Webhook
 ]]
 -- =====================================================
+-- BAGIAN 0: VALIDASI KEY VIA API (WHITELIST)
+-- =====================================================
+local function ValidateKeyWithAPI(key, robloxId)
+    -- GANTI URL INI DENGAN IP VPS ATAU DOMAIN KAMU
+    local apiUrl = "http://your-server-ip:3000/validate"
+    local data = {
+        key = key,
+        robloxId = tostring(robloxId)
+    }
+    local body = HttpService:JSONEncode(data)
+
+    local success, response = pcall(function()
+        return HttpRequest({
+            Url = apiUrl,
+            Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = body
+        })
+    end)
+
+    if not success or not response then
+        return false, "NETWORK_ERROR"
+    end
+
+    if response.StatusCode ~= 200 then
+        return false, "SERVER_ERROR"
+    end
+
+    local decoded = HttpService:JSONDecode(response.Body)
+    return decoded.valid, decoded.reason
+end
+
+-- Tambahkan tab Authentication di Rayfield
+local TabAuth = Window:CreateTab("Authentication", "key")
+TabAuth:CreateSection("Masukkan Key")
+
+local key = ""
+local KeyInput = TabAuth:CreateInput({
+    Name = "License Key",
+    CurrentValue = "",
+    PlaceholderText = "VECH-XXXX-HOOK",
+    Flag = "LicenseKey",
+    Callback = function(text)
+        key = text
+    end
+})
+
+local authenticated = false
+TabAuth:CreateButton({
+    Name = "Validate Key",
+    Callback = function()
+        if key == "" then
+            Rayfield:Notify({ Title = "Vechnost", Content = "Masukkan key terlebih dahulu!", Duration = 3 })
+            return
+        end
+
+        local valid, reason = ValidateKeyWithAPI(key, LocalPlayer.UserId)
+        if valid then
+            Rayfield:Notify({ Title = "Vechnost", Content = "✅ Key valid! Silakan gunakan fitur logger.", Duration = 3 })
+            authenticated = true
+        else
+            Rayfield:Notify({ Title = "Vechnost", Content = "❌ Key tidak valid: " .. tostring(reason), Duration = 5 })
+        end
+    end
+})
+
+-- Di bagian toggle Enable Webhook Logger, tambahkan pengecekan authenticated
+-- Cari bagian TabWebhook:CreateToggle untuk Enable Webhook Logger, dan ubah callback-nya menjadi:
+
+TabWebhook:CreateToggle({
+    Name = "Enable Webhook Logger",
+    CurrentValue = false,
+    Flag = "LoggerEnabled",
+    Callback = function(Value)
+        if Value then
+            if not authenticated then
+                Rayfield:Notify({ Title = "Vechnost", Content = "Validasi key terlebih dahulu di tab Authentication!", Duration = 4 })
+                return false
+            end
+            if Settings.Url == "" then
+                Rayfield:Notify({ Title = "Vechnost", Content = "Webhook URL not found!", Duration = 3 })
+                return false
+            end
+            StartLogger()
+        else
+            StopLogger()
+        end
+    end
+})
+
+-- Sisanya script tetap sama (mulai dari BAGIAN 1 sampai akhir)
+-- ...
+-- =====================================================
 -- BAGIAN 1: CLEANUP SYSTEM
 -- =====================================================
 local CoreGui = game:GetService("CoreGui")
@@ -1034,7 +1127,7 @@ local Window = Rayfield:CreateWindow({
         FolderName = "Vechnost",
         FileName = "VechnostConfig"
     },
-    KeySystem = true,
+    KeySystem = false,
     KeySettings = {
         Title = "Vechnost Access",
         Subtitle = "Authentication Required",
