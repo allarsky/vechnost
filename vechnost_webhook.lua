@@ -7,8 +7,7 @@
           Logs fish catches from ALL players in the server
           Sends rich notifications to Discord via Webhook
 ]]
--- 
-=====================================================
+-- =====================================================
 -- SHA256 (LUA MURNI)
 -- =====================================================
 local sha256 = (function()
