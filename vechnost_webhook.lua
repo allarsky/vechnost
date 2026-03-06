@@ -952,58 +952,251 @@ local function StopLogger()
 end
 
 -- =====================================================
--- BAGIAN 11: RAYFIELD UI
+-- BAGIAN 11: FUNGSI PEMBUAT WINDOW (UI DINAMIS)
 -- =====================================================
-local Window = Rayfield:CreateWindow({
-    Name = "Vechnost",
-    Icon = "webhook",
-    LoadingTitle = "Vechnost Webhook Notifier",
-    LoadingSubtitle = "Beta",
-    Theme = "Default",
-    ToggleUIKeybind = "V",
-    DisableRayfieldPrompts = true,
-    DisableBuildWarnings = true,
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "Vechnost",
-        FileName = "VechnostConfig"
-    },
-    KeySystem = false,
-})
 
--- ===== TAB AUTHENTICATION (DITEMPATKAN SETELAH WINDOW DIBUAT) =====
-local TabAuth = Window:CreateTab("Authentication", "key")
-TabAuth:CreateSection("Masukkan Key")
-
-local key = ""
-local KeyInput = TabAuth:CreateInput({
-    Name = "License Key",
-    CurrentValue = "",
-    PlaceholderText = "VECH-XXXX-HOOK",
-    Flag = "LicenseKey",
-    Callback = function(text)
-        key = text
-    end
-})
-
+local CurrentWindow = nil
 local authenticated = false
-TabAuth:CreateButton({
-    Name = "Validate Key",
-    Callback = function()
-        if key == "" then
-            Rayfield:Notify({ Title = "Vechnost", Content = "Masukkan key terlebih dahulu!", Duration = 3 })
-            return
-        end
 
-        local valid, reason = ValidateKeyWithAPI(key, LocalPlayer.UserId)
-        if valid then
-            Rayfield:Notify({ Title = "Vechnost", Content = "✅ Key valid! Silakan gunakan fitur logger.", Duration = 3 })
-            authenticated = true
-        else
-            Rayfield:Notify({ Title = "Vechnost", Content = "❌ Key tidak valid: " .. tostring(reason), Duration = 5 })
-        end
+-- Fungsi untuk membuat window authentication
+local function CreateAuthWindow()
+    if CurrentWindow then
+        CurrentWindow:Destroy()
     end
-})
+    local win = Rayfield:CreateWindow({
+        Name = "Vechnost - Authentication",
+        Icon = "key",
+        LoadingTitle = "Vechnost",
+        LoadingSubtitle = "Masukkan Key",
+        Theme = "Default",
+        ToggleUIKeybind = "V",
+        DisableRayfieldPrompts = true,
+        DisableBuildWarnings = true,
+        ConfigurationSaving = { Enabled = false },
+        KeySystem = false,
+    })
+    CurrentWindow = win
+
+    local TabAuth = win:CreateTab("Authentication", "key")
+    TabAuth:CreateSection("Masukkan Key")
+
+    local keyInput = ""
+    TabAuth:CreateInput({
+        Name = "License Key",
+        CurrentValue = "",
+        PlaceholderText = "VECH-XXXX-HOOK",
+        Flag = "AuthKeyInput",
+        Callback = function(text)
+            keyInput = text
+        end
+    })
+
+    TabAuth:CreateButton({
+        Name = "Validate Key",
+        Callback = function()
+            if keyInput == "" then
+                Rayfield:Notify({ Title = "Vechnost", Content = "Masukkan key terlebih dahulu!", Duration = 3 })
+                return
+            end
+
+            local valid, reason = ValidateKeyWithAPI(keyInput, LocalPlayer.UserId)
+            if valid then
+                Rayfield:Notify({ Title = "Vechnost", Content = "✅ Key valid! Memuat panel...", Duration = 3 })
+                authenticated = true
+                -- Buat window utama
+                CreateMainWindow()
+            else
+                Rayfield:Notify({ Title = "Vechnost", Content = "❌ Key tidak valid: " .. tostring(reason), Duration = 5 })
+            end
+        end
+    })
+end
+
+-- Fungsi untuk membuat window utama (setup webhook & settings)
+local function CreateMainWindow()
+    if CurrentWindow then
+        CurrentWindow:Destroy()
+    end
+    local win = Rayfield:CreateWindow({
+        Name = "Vechnost",
+        Icon = "webhook",
+        LoadingTitle = "Vechnost Webhook Notifier",
+        LoadingSubtitle = "Beta",
+        Theme = "Default",
+        ToggleUIKeybind = "V",
+        DisableRayfieldPrompts = true,
+        DisableBuildWarnings = true,
+        ConfigurationSaving = {
+            Enabled = true,
+            FolderName = "Vechnost",
+            FileName = "VechnostConfig"
+        },
+        KeySystem = false,
+    })
+    CurrentWindow = win
+
+    local TabWebhook = win:CreateTab("Setup Webhook", "webhook")
+    local TabSettings = win:CreateTab("Settings", "settings")
+
+    -- RARITY FILTER --
+    TabWebhook:CreateSection("Rarity Filter")
+
+    TabWebhook:CreateDropdown({
+        Name = "Filter by Rarity",
+        Options = RarityList,
+        CurrentOption = {},
+        MultipleOptions = true,
+        Flag = "RarityFilter",
+        Callback = function(Options)
+            Settings.SelectedRarities = {}
+            for _, value in ipairs(Options or {}) do
+                if type(value) == "string" then
+                    local tier = RARITY_NAME_TO_TIER[value]
+                    if tier then Settings.SelectedRarities[tier] = true end
+                end
+            end
+            if next(Settings.SelectedRarities) == nil then
+                Rayfield:Notify({ Title = "Vechnost", Content = "Filter: all rarity", Duration = 2 })
+            else
+                Rayfield:Notify({ Title = "Vechnost", Content = "Filter rarity updated", Duration = 2 })
+            end
+        end
+    })
+
+    -- WEBHOOK URL --
+    TabWebhook:CreateSection("Setup Webhook")
+
+    local WebhookUrlBuffer = ""
+    TabWebhook:CreateInput({
+        Name = "Discord Webhook URL",
+        CurrentValue = "",
+        PlaceholderText = "https://discord.com/api/webhook/...",
+        RemoveTextAfterFocusLost = false,
+        Flag = "WebhookUrl",
+        Callback = function(Text)
+            WebhookUrlBuffer = tostring(Text)
+        end
+    })
+
+    TabWebhook:CreateButton({
+        Name = "Save Webhook URL",
+        Callback = function()
+            local url = WebhookUrlBuffer:gsub("%s+", "")
+            if not url:match("^https://discord.com/api/webhooks/")
+            and not url:match("^https://canary.discord.com/api/webhooks/") then
+                Rayfield:Notify({ Title = "Vechnost", Content = "URL webhook tidak valid!", Duration = 3 })
+                return
+            end
+            Settings.Url = url
+            Rayfield:Notify({ Title = "Vechnost", Content = "Webhook URL tersimpan!", Duration = 2 })
+        end
+    })
+
+    -- MODE --
+    TabWebhook:CreateSection("Notifier Mode")
+
+    TabWebhook:CreateToggle({
+        Name = "Local / Global Mode",
+        CurrentValue = true,
+        Flag = "ServerNotifierMode",
+        Callback = function(Value)
+            Settings.ServerWide = Value
+            Rayfield:Notify({
+                Title = "Vechnost",
+                Content = Value and "Mode: Global Server" or "Mode: Local Server",
+                Duration = 2
+            })
+        end
+    })
+
+    -- CONTROL --
+    TabWebhook:CreateSection("Controller")
+
+    TabWebhook:CreateToggle({
+        Name = "Enable Webhook Logger",
+        CurrentValue = false,
+        Flag = "LoggerEnabled",
+        Callback = function(Value)
+            if Value then
+                if not authenticated then
+                    Rayfield:Notify({ Title = "Vechnost", Content = "Validasi key terlebih dahulu!", Duration = 4 })
+                    return false
+                end
+                if Settings.Url == "" then
+                    Rayfield:Notify({ Title = "Vechnost", Content = "Webhook URL not found!", Duration = 3 })
+                    return false
+                end
+                StartLogger()
+            else
+                StopLogger()
+            end
+        end
+    })
+
+    -- STATUS --
+    local StatusLabel = TabWebhook:CreateParagraph({
+        Title = "Vechnost Status",
+        Content = "Status: Offline"
+    })
+
+    task.spawn(function()
+        while true do
+            task.wait(2)
+            if StatusLabel then
+                pcall(function()
+                    if Settings.Active then
+                        StatusLabel:Set({
+                            Title = "Notifier Status",
+                            Content = string.format(
+                                "Status: Active\nMode: %s\nTotal Log: %d fish",
+                                Settings.ServerWide and "Global Server" or "Local Server",
+                                Settings.LogCount
+                            )
+                        })
+                    else
+                        StatusLabel:Set({
+                            Title = "Notifier Status",
+                            Content = "Status: Offline"
+                        })
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- SETTINGS TAB --
+    TabSettings:CreateSection("Information")
+
+    TabSettings:CreateParagraph({
+        Title = "Vechnost Webhook Notifier",
+        Content = "Beta Version\nNotifier Fish Caught\nfish notifications from all players on the server\n\nby discord.gg/vechnost"
+    })
+
+    TabSettings:CreateSection("Test Mode")
+
+    TabSettings:CreateButton({
+        Name = "Test Webhook",
+        Callback = function()
+            if Settings.Url == "" then
+                Rayfield:Notify({ Title = "Vechnost", Content = "Isi webhook URL dulu!", Duration = 3 })
+                return
+            end
+            task.spawn(function()
+                SendWebhook(BuildTestPayload(LocalPlayer.Name))
+            end)
+            Rayfield:Notify({ Title = "Vechnost", Content = "Sending Test Notifier!", Duration = 2 })
+        end
+    })
+
+    TabSettings:CreateButton({
+        Name = "Reset Counter",
+        Callback = function()
+            Settings.LogCount = 0
+            Settings.SentUUID = {}
+            Rayfield:Notify({ Title = "Vechnost", Content = "Counter Reseted!", Duration = 2 })
+        end
+    })
+end
 
 -- =====================================================
 -- BAGIAN 12: FLOATING TOGGLE BUTTON
@@ -1032,7 +1225,9 @@ Instance.new("UICorner", Button).CornerRadius = UDim.new(1, 0)
 local windowVisible = true
 Button.MouseButton1Click:Connect(function()
     windowVisible = not windowVisible
-    pcall(function() Rayfield:SetVisibility(windowVisible) end)
+    if CurrentWindow then
+        pcall(function() CurrentWindow:SetVisibility(windowVisible) end)
+    end
 end)
 
 local dragging = false
@@ -1063,180 +1258,10 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- =====================================================
--- BAGIAN 13: TABS & UI ELEMENTS (SISANYA)
+-- BAGIAN 13: INIT
 -- =====================================================
-local TabWebhook = Window:CreateTab("Setup Webhook", "webhook")
-local TabSettings = Window:CreateTab("Settings", "settings")
+-- Mulai dengan window authentication
+CreateAuthWindow()
 
--- RARITY FILTER --
-TabWebhook:CreateSection("Rarity Filter")
-
-TabWebhook:CreateDropdown({
-    Name = "Filter by Rarity",
-    Options = RarityList,
-    CurrentOption = {},
-    MultipleOptions = true,
-    Flag = "RarityFilter",
-    Callback = function(Options)
-        Settings.SelectedRarities = {}
-
-        for _, value in ipairs(Options or {}) do
-            if type(value) == "string" then
-                local tier = RARITY_NAME_TO_TIER[value]
-                if tier then Settings.SelectedRarities[tier] = true end
-            end
-        end
-
-        if next(Settings.SelectedRarities) == nil then
-            Rayfield:Notify({ Title = "Vechnost", Content = "Filter: all rarity", Duration = 2 })
-        else
-            Rayfield:Notify({ Title = "Vechnost", Content = "Filter rarity updated", Duration = 2 })
-        end
-    end
-})
-
--- WEBHOOK URL --
-TabWebhook:CreateSection("Setup Webhook")
-
-local WebhookUrlBuffer = ""
-
-TabWebhook:CreateInput({
-    Name = "Discord Webhook URL",
-    CurrentValue = "",
-    PlaceholderText = "https://discord.com/api/webhook/...",
-    RemoveTextAfterFocusLost = false,
-    Flag = "WebhookUrl",
-    Callback = function(Text)
-        WebhookUrlBuffer = tostring(Text)
-    end
-})
-
-TabWebhook:CreateButton({
-    Name = "Save Webhook URL",
-    Callback = function()
-        local url = WebhookUrlBuffer:gsub("%s+", "")
-
-        if not url:match("^https://discord.com/api/webhooks/")
-        and not url:match("^https://canary.discord.com/api/webhooks/") then
-            Rayfield:Notify({ Title = "Vechnost", Content = "URL webhook tidak valid!", Duration = 3 })
-            return
-        end
-
-        Settings.Url = url
-        Rayfield:Notify({ Title = "Vechnost", Content = "Webhook URL tersimpan!", Duration = 2 })
-    end
-})
-
--- MODE --
-TabWebhook:CreateSection("Notifier Mode")
-
-TabWebhook:CreateToggle({
-    Name = "Local / Global Mode",
-    CurrentValue = true,
-    Flag = "ServerNotifierMode",
-    Callback = function(Value)
-        Settings.ServerWide = Value
-        Rayfield:Notify({
-            Title = "Vechnost",
-            Content = Value and "Mode: Global Server" or "Mode: Local Server",
-            Duration = 2
-        })
-    end
-})
-
--- CONTROL --
-TabWebhook:CreateSection("Controller")
-
-TabWebhook:CreateToggle({
-    Name = "Enable Webhook Logger",
-    CurrentValue = false,
-    Flag = "LoggerEnabled",
-    Callback = function(Value)
-        if Value then
-            if not authenticated then
-                Rayfield:Notify({ Title = "Vechnost", Content = "Validasi key terlebih dahulu di tab Authentication!", Duration = 4 })
-                return false
-            end
-            if Settings.Url == "" then
-                Rayfield:Notify({ Title = "Vechnost", Content = "Webhook URL not found!", Duration = 3 })
-                return false
-            end
-            StartLogger()
-        else
-            StopLogger()
-        end
-    end
-})
-
--- STATUS --
-local StatusLabel = TabWebhook:CreateParagraph({
-    Title = "Vechnost Status",
-    Content = "Status: Offline"
-})
-
-task.spawn(function()
-    while true do
-        task.wait(2)
-        if StatusLabel then
-            pcall(function()
-                if Settings.Active then
-                    StatusLabel:Set({
-                        Title = "Notifier Status",
-                        Content = string.format(
-                            "Status: Active\nMode: %s\nTotal Log: %d fish",
-                            Settings.ServerWide and "Global Server" or "Local Server",
-                            Settings.LogCount
-                        )
-                    })
-                else
-                    StatusLabel:Set({
-                        Title = "Notifier Status",
-                        Content = "Status: Offline"
-                    })
-                end
-            end)
-        end
-    end
-end)
-
--- SETTINGS TAB --
-TabSettings:CreateSection("Information")
-
-TabSettings:CreateParagraph({
-    Title = "Vechnost Webhook Notifier",
-    Content = "Beta Version\nNotifier Fish Caught\nfish notifications from all players on the server\n\nby discord.gg/vechnost"
-})
-
-TabSettings:CreateSection("Test Mode")
-
-TabSettings:CreateButton({
-    Name = "Test Webhook",
-    Callback = function()
-        if Settings.Url == "" then
-            Rayfield:Notify({ Title = "Vechnost", Content = "Isi webhook URL dulu!", Duration = 3 })
-            return
-        end
-
-        task.spawn(function()
-            SendWebhook(BuildTestPayload(LocalPlayer.Name))
-        end)
-
-        Rayfield:Notify({ Title = "Vechnost", Content = "Sending Test Notifier!", Duration = 2 })
-    end
-})
-
-TabSettings:CreateButton({
-    Name = "Reset Counter",
-    Callback = function()
-        Settings.LogCount = 0
-        Settings.SentUUID = {}
-        Rayfield:Notify({ Title = "Vechnost", Content = "Counter Reseted!", Duration = 2 })
-    end
-})
-
--- =====================================================
--- BAGIAN 14: INIT
--- =====================================================
-Rayfield:LoadConfiguration()
 warn("[Vechnost] Webhook Notifier Loaded!")
 warn("[Vechnost] Toggle GUI: click V or Press logo floating")
