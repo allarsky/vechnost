@@ -980,41 +980,44 @@ local function CreateAuthWindow()
     local TabAuth = win:CreateTab("Authentication", "key")
     TabAuth:CreateSection("Masukkan Key")
 
-    local keyInput = ""
+    -- Gunakan flag untuk menyimpan input
     TabAuth:CreateInput({
         Name = "License Key",
         CurrentValue = "",
         PlaceholderText = "VECH-XXXX-HOOK",
         Flag = "AuthKeyInput",
         Callback = function(text)
-            keyInput = text
+            -- Nilai otomatis tersimpan di Rayfield.Flags["AuthKeyInput"]
         end
     })
 
     TabAuth:CreateButton({
-    Name = "Validate Key",
-    Callback = function()
-        if keyInput == "" then
-            Rayfield:Notify({ Title = "Vechnost", Content = "Masukkan key!", Duration = 3 })
-            return
+        Name = "Validate Key",
+        Callback = function()
+            -- Ambil nilai dari flag
+            local keyInput = Rayfield.Flags and Rayfield.Flags["AuthKeyInput"]
+            if not keyInput or keyInput == "" then
+                Rayfield:Notify({ Title = "Vechnost", Content = "Masukkan key terlebih dahulu!", Duration = 3 })
+                return
+            end
+
+            -- Pastikan fungsi ValidateKeyWithAPI ada
+            if not ValidateKeyWithAPI then
+                Rayfield:Notify({ Title = "Vechnost", Content = "Error: Fungsi validasi tidak ditemukan!", Duration = 5 })
+                return
+            end
+
+            local valid, reason = ValidateKeyWithAPI(keyInput, LocalPlayer.UserId)
+            if valid then
+                Rayfield:Notify({ Title = "Vechnost", Content = "✅ Key valid! Memuat panel...", Duration = 3 })
+                authenticated = true
+                CreateMainWindow()
+            else
+                Rayfield:Notify({ Title = "Vechnost", Content = "❌ Key tidak valid: " .. tostring(reason), Duration = 5 })
+            end
         end
-
-        -- Gunakan pcall agar jika API error, skrip tidak mati total
-        local success, valid, reason = pcall(function()
-            return ValidateKeyWithAPI(keyInput, LocalPlayer.UserId)
-        end)
-
-        if success and valid then
-            Rayfield:Notify({ Title = "Vechnost", Content = "✅ Key valid!", Duration = 3 })
-            authenticated = true
-            task.wait(0.5) -- Beri jeda sedikit sebelum ganti window
-            CreateMainWindow()
-        else
-            Rayfield:Notify({ Title = "Vechnost", Content = "❌ Error: " .. (reason or "Server Down"), Duration = 5 })
-        end
-    end
-})
-
+    })
+end
 
 -- Fungsi untuk membuat window utama (setup webhook & settings)
 local function CreateMainWindow()
