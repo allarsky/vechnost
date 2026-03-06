@@ -992,25 +992,29 @@ local function CreateAuthWindow()
     })
 
     TabAuth:CreateButton({
-        Name = "Validate Key",
-        Callback = function()
-            if keyInput == "" then
-                Rayfield:Notify({ Title = "Vechnost", Content = "Masukkan key terlebih dahulu!", Duration = 3 })
-                return
-            end
-
-            local valid, reason = ValidateKeyWithAPI(keyInput, LocalPlayer.UserId)
-            if valid then
-                Rayfield:Notify({ Title = "Vechnost", Content = "✅ Key valid! Memuat panel...", Duration = 3 })
-                authenticated = true
-                -- Buat window utama
-                CreateMainWindow()
-            else
-                Rayfield:Notify({ Title = "Vechnost", Content = "❌ Key tidak valid: " .. tostring(reason), Duration = 5 })
-            end
+    Name = "Validate Key",
+    Callback = function()
+        if keyInput == "" then
+            Rayfield:Notify({ Title = "Vechnost", Content = "Masukkan key!", Duration = 3 })
+            return
         end
-    })
-end
+
+        -- Gunakan pcall agar jika API error, skrip tidak mati total
+        local success, valid, reason = pcall(function()
+            return ValidateKeyWithAPI(keyInput, LocalPlayer.UserId)
+        end)
+
+        if success and valid then
+            Rayfield:Notify({ Title = "Vechnost", Content = "✅ Key valid!", Duration = 3 })
+            authenticated = true
+            task.wait(0.5) -- Beri jeda sedikit sebelum ganti window
+            CreateMainWindow()
+        else
+            Rayfield:Notify({ Title = "Vechnost", Content = "❌ Error: " .. (reason or "Server Down"), Duration = 5 })
+        end
+    end
+})
+
 
 -- Fungsi untuk membuat window utama (setup webhook & settings)
 local function CreateMainWindow()
