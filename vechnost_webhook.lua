@@ -980,30 +980,31 @@ local function CreateAuthWindow()
     local TabAuth = win:CreateTab("Authentication", "key")
     TabAuth:CreateSection("Masukkan Key")
 
-    -- Gunakan flag untuk menyimpan input
+    -- Variable untuk menyimpan input
+    local keyInputValue = ""
     TabAuth:CreateInput({
         Name = "License Key",
         CurrentValue = "",
         PlaceholderText = "VECH-XXXX-HOOK",
-        Flag = "AuthKeyInput",
+        Flag = "AuthKeyInput",  -- flag tetap digunakan untuk kompatibilitas, tapi kita pakai variable lokal
         Callback = function(text)
-            -- Nilai otomatis tersimpan di Rayfield.Flags["AuthKeyInput"]
+            keyInputValue = text
         end
     })
 
     TabAuth:CreateButton({
         Name = "Validate Key",
         Callback = function()
-            -- Ambil nilai dari flag
-            local keyInput = Rayfield.Flags and Rayfield.Flags["AuthKeyInput"]
+            -- Ambil dari variable lokal
+            local keyInput = keyInputValue
             if not keyInput or keyInput == "" then
                 Rayfield:Notify({ Title = "Vechnost", Content = "Masukkan key terlebih dahulu!", Duration = 3 })
                 return
             end
 
-            -- Pastikan fungsi ValidateKeyWithAPI ada
-            if not ValidateKeyWithAPI then
-                Rayfield:Notify({ Title = "Vechnost", Content = "Error: Fungsi validasi tidak ditemukan!", Duration = 5 })
+            -- Pastikan fungsi validasi ada
+            if type(ValidateKeyWithAPI) ~= "function" then
+                Rayfield:Notify({ Title = "Vechnost", Content = "Internal error: validasi tidak tersedia.", Duration = 5 })
                 return
             end
 
