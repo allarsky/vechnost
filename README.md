@@ -1,3 +1,2 @@
 # vechnost
 
-MAU NGAPAIN LU LIAT REPO GUA AJG
